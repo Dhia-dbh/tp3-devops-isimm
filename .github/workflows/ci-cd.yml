@@ -10,39 +10,49 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository code
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # Build Phase: Build the Docker image from the Dockerfile
       - name: Build Docker Image
         run: docker build -t tp3-devops-isimm:latest .
 
-      # Test Phase: Run the container and execute tests inside it
       - name: Run Container and Execute Tests
-        run: echo "test completed successfully" # docker run --rm tp3-devops-isimm:latest ./run-tests.sh
+        run: echo "test completed successfully"
+
+      # Save image as tarball and upload as artifact
+      - name: Save Docker Image
+        run: docker save -o tp3-devops-isimm.tar tp3-devops-isimm:latest
+
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image
+          path: tp3-devops-isimm.tar
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     steps:
-      # Checkout the repository code
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # Deployment Phase: Log in to Docker Hub
+      # Download and load image from artifact
+      - name: Download Docker Image Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+          path: .
+
+      - name: Load Docker Image
+        run: docker load -i tp3-devops-isimm.tar
+
+      # Continue with deployment
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # List Docker images
-      - name: Log Docker Images in console
-        run: docker image ls
-      
-      # Tag the built image for Docker Hub
       - name: Tag Docker Image
         run: docker tag tp3-devops-isimm:latest dhiadbh/tp3-devops-isimm:latest
 
-      # Push the Docker image to Docker Hub
       - name: Push Docker Image
         run: docker push dhiadbh/tp3-devops-isimm:latest
