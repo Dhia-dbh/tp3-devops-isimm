@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build Docker Image
         run: docker build -t tp3-devops-isimm:latest .
@@ -19,12 +19,11 @@ jobs:
       - name: Run Container and Execute Tests
         run: echo "test completed successfully"
 
-      # Save image as tarball and upload as artifact
       - name: Save Docker Image
         run: docker save -o tp3-devops-isimm.tar tp3-devops-isimm:latest
 
       - name: Upload Docker Image Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: tp3-devops-isimm.tar
@@ -35,11 +34,10 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4 # Updated to v4
 
-      # Download and load image from artifact
       - name: Download Docker Image Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docker-image
           path: .
@@ -47,7 +45,6 @@ jobs:
       - name: Load Docker Image
         run: docker load -i tp3-devops-isimm.tar
 
-      # Continue with deployment
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
